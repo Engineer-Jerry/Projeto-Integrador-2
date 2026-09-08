@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}UniVet{% endblock %}</title>
+    <link rel="icon" type="image/jpeg" href="{{ logo_url }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <a href="{{ url_for('pagina_inicial') }}" class="brand">
+                <img src="{{ logo_url }}" alt="Logo da Clinica Veterinaria Fernanda Calixto">
+                <div>
+                    <strong>UniVet</strong>
+                    <span>Clínica Veterinária Fernanda Calixto</span>
+                </div>
+            </a>
+
+            <div class="topbar-side">
+                <span class="welcome">
+                    Sessão ativa:
+                    {{ (usuario_logado.nome if usuario_logado else 'Visitante') }}
+                    {% if usuario_logado and usuario_logado.perfil == 'admin' %}(Administrador){% endif %}
+                </span>
+                <a class="btn btn-secondary" href="{{ url_for('logout') }}">Sair</a>
+            </div>
+        </header>
+
+        <div class="layout">
+            <aside class="sidebar">
+                <nav class="menu">
+                    <a href="{{ url_for('pagina_inicial') }}" class="{% if secao == 'pagina_inicial' %}active{% endif %}">Página inicial</a>
+                    <a href="{{ url_for('listar_tutores') }}" class="{% if secao == 'tutores' %}active{% endif %}">Tutores</a>
+                    <a href="{{ url_for('listar_pets') }}" class="{% if secao == 'pets' %}active{% endif %}">Animais</a>
+                    <a href="{{ url_for('listar_consultas') }}" class="{% if secao == 'consultas' %}active{% endif %}">Consultas</a>
+                    <a href="{{ url_for('gerenciar_estoque') }}" class="{% if secao == 'estoque' %}active{% endif %}">Estoque</a>
+                    <a href="{{ url_for('listar_servicos_page') }}" class="{% if secao == 'configuracoes' %}active{% endif %}">Serviços</a>
+                    <a href="{{ url_for('listar_veterinarios_page') }}" class="{% if secao == 'configuracoes' %}active{% endif %}">Veterinários</a>
+                </nav>
+            </aside>
+
+            <main class="content">
+                {% if breadcrumbs %}
+                    <nav class="breadcrumbs" aria-label="Breadcrumb">
+                        {% for label, link in breadcrumbs %}
+                            {% if link %}
+                                <a href="{{ link }}">{{ label }}</a>
+                            {% else %}
+                                <span>{{ label }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </nav>
+                {% endif %}
+
+                {% with mensagens = get_flashed_messages(with_categories=true) %}
+                    {% if mensagens %}
+                        <ul class="flash-list">
+                            {% for categoria, mensagem in mensagens %}
+                                <li class="flash-item {{ categoria }}">{{ mensagem }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+</body>
+</html>

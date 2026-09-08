@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Controle de Estoque</h2>
+
+<p>Cadastre medicamentos, registre entradas e controle as saídas do estoque.</p>
+
+<!-- Painel de Cadastro e Movimentações -->
+<div class="painel-acoes" style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px;">
+    
+    <!-- Formulário de Novo Produto (Acessibilidade + API Fetch) -->
+    <fieldset style="flex: 1; min-width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+        <legend id="legendaProduto" style="font-weight: bold; padding: 0 5px;">Cadastrar Novo Produto</legend>
+        <form id="formProduto">
+            <input type="hidden" id="produto_id">
+            <div style="margin-bottom: 10px;">
+                <label for="nome_produto">Nome do Produto:</label><br>
+                <input type="text" id="nome_produto" style="width: 100%;" required aria-required="true">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="categoria">Categoria:</label><br>
+                <input type="text" id="categoria" style="width: 100%;" required aria-required="true" placeholder="Ex: Antibiótico, Ração">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="fornecedor">Fornecedor:</label><br>
+                <input type="text" id="fornecedor" style="width: 100%;" required aria-required="true">
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label for="quantidade_atual">Qtd Inicial:</label><br>
+                    <input type="number" id="quantidade_atual" min="0" style="width: 100%;" required aria-required="true">
+                </div>
+                <div style="flex: 1;">
+                    <label for="quantidade_minima">Qtd Mínima:</label><br>
+                    <input type="number" id="quantidade_minima" min="0" value="5" style="width: 100%;" required aria-required="true">
+                </div>
+                <div style="flex: 1;">
+                    <label for="unidade_medida">Unidade:</label><br>
+                    <input type="text" id="unidade_medida" style="width: 100%;" required aria-required="true" placeholder="Ex: ml, mg, kg">
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label for="data_validade">Data de Validade:</label><br>
+                    <input type="date" id="data_validade" style="width: 100%;" required aria-required="true">
+                </div>
+                <div style="flex: 1;">
+                    <label for="valor_compra">Valor de Compra:</label><br>
+                    <input type="number" id="valor_compra" min="0" step="0.01" value="0" style="width: 100%;" required aria-required="true">
+                </div>
+            </div>
+            <button id="botaoSalvarProduto" type="submit" style="width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Cadastrar Produto</button>
+            <button id="botaoCancelarEdicao" type="button" hidden style="width: 100%; margin-top: 8px; padding: 10px; cursor: pointer;">Cancelar edição</button>
+        </form>
+    </fieldset>
+
+    <fieldset style="flex: 1; min-width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+        <legend style="font-weight: bold; padding: 0 5px;">Registrar Entrada</legend>
+        <form id="formEntrada">
+            <div style="margin-bottom: 10px;">
+                <label for="produto_entrada_id">Produto:</label><br>
+                <select id="produto_entrada_id" style="width: 100%;" required aria-required="true">
+                    <option value="">Selecione um produto...</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label for="qtd_entrada">Quantidade:</label><br>
+                    <input type="number" id="qtd_entrada" min="1" style="width: 100%;" required aria-required="true">
+                </div>
+                <div style="flex: 1;">
+                    <label for="validade_entrada">Validade do lote:</label><br>
+                    <input type="date" id="validade_entrada" style="width: 100%;" required aria-required="true">
+                </div>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="valor_entrada">Valor da compra:</label><br>
+                <input type="number" id="valor_entrada" min="0" step="0.01" style="width: 100%;" required aria-required="true">
+            </div>
+            <button type="submit" style="width: 100%; padding: 10px; background-color: #1976D2; color: white; border: none; border-radius: 4px; cursor: pointer;">Registrar Entrada</button>
+            <div id="mensagemEntrada" role="status" aria-live="polite" style="margin-top:10px; font-weight:bold; text-align: center;"></div>
+        </form>
+    </fieldset>
+
+    <!-- Formulário de Saída (API Fetch) -->
+    <fieldset style="flex: 1; min-width: 300px; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+        <legend style="font-weight: bold; padding: 0 5px;">Registrar Saída</legend>
+        <form id="formSaida">
+            <div style="margin-bottom: 10px;">
+                <label for="produto_saida_id">Selecione o Produto:</label><br>
+                <select id="produto_saida_id" style="width: 100%;" required aria-required="true">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="qtd_saida">Quantidade a retirar:</label><br>
+                <input type="number" id="qtd_saida" min="1" style="width: 100%;" required aria-required="true">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="motivo_saida">Motivo:</label><br>
+                <select id="motivo_saida" style="width: 100%;" required aria-required="true">
+                    <option value="venda">Venda</option>
+                    <option value="avaria">Avaria</option>
+                    <option value="validade">Validade</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="cliente_tutor_saida">Cliente / Tutor:</label><br>
+                <input type="text" id="cliente_tutor_saida" style="width: 100%;" required aria-required="true">
+            </div>
+            <button type="submit" style="width: 100%; margin-top: 10px; padding: 10px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Baixar Estoque</button>
+            <div id="mensagemAcessivel" role="alert" aria-live="assertive" style="margin-top:10px; font-weight:bold; text-align: center;"></div>
+        </form>
+    </fieldset>
+</div>
+
+<!-- Tabela Dinâmica -->
+<h3>Inventário Atual</h3>
+<table width="100%" cellpadding="10" style="border-collapse: collapse; border: 1px solid #ddd; text-align: left;">
+    <thead style="background-color: #f2f2f2;">
+        <tr>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Qtd Atual</th>
+            <th>Validade</th>
+            <th>Valor de compra</th>
+            <th>Fornecedor</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody id="tabelaEstoque">
+        <!-- Linhas inseridas pelo JavaScript -->
+    </tbody>
+</table>
+
+<!-- Scripts de Requisição (AJAX) -->
+<script>
+    document.addEventListener("DOMContentLoaded", carregarProdutos);
+
+    // GET: Busca produtos e preenche a tela
+    async function carregarProdutos() {
+        try {
+            const resposta = await fetch('/api/produtos');
+            const produtos = await resposta.json();
+            
+            const tbody = document.getElementById('tabelaEstoque');
+            const selectSaida = document.getElementById('produto_saida_id');
+            const selectEntrada = document.getElementById('produto_entrada_id');
+            
+            tbody.innerHTML = '';
+            selectSaida.innerHTML = '<option value="">Selecione um produto...</option>';
+            selectEntrada.innerHTML = '<option value="">Selecione um produto...</option>';
+
+            if(produtos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum produto cadastrado.</td></tr>';
+            }
+
+            produtos.forEach(prod => {
+                // Monta Tabela (Alerta visual se o estoque estiver baixo)
+                const alertaEstoque = prod.quantidade_atual <= prod.quantidade_minima ? 'color: #D32F2F; font-weight: bold;' : '';
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${prod.nome}</td>
+                        <td>${prod.categoria}</td>
+                        <td style="${alertaEstoque}">${prod.quantidade_atual} ${prod.unidade_medida}</td>
+                        <td>${prod.data_validade}</td>
+                        <td>R$ ${Number(prod.valor_compra).toFixed(2)}</td>
+                        <td>${prod.fornecedor}</td>
+                        <td><button type="button" onclick="editarProduto(${prod.id})">Editar</button></td>
+                    </tr>
+                `;
+                // Monta Select de Saídas
+                selectSaida.innerHTML += `<option value="${prod.id}">${prod.nome} (Disponível: ${prod.quantidade_atual})</option>`;
+                selectEntrada.innerHTML += `<option value="${prod.id}">${prod.nome}</option>`;
+            });
+        } catch (error) {
+            console.error('Erro ao buscar produtos:', error);
+        }
+    }
+
+    let produtoEmEdicao = null;
+
+    function preencherFormulario(produto) {
+        produtoEmEdicao = produto.id;
+        document.getElementById('produto_id').value = produto.id;
+        document.getElementById('nome_produto').value = produto.nome || '';
+        document.getElementById('categoria').value = produto.categoria || '';
+        document.getElementById('fornecedor').value = produto.fornecedor || '';
+        document.getElementById('quantidade_atual').value = produto.quantidade_atual || 0;
+        document.getElementById('quantidade_minima').value = produto.quantidade_minima || 0;
+        document.getElementById('unidade_medida').value = produto.unidade_medida || '';
+        document.getElementById('data_validade').value = produto.data_validade || '';
+        document.getElementById('valor_compra').value = produto.valor_compra || 0;
+        document.getElementById('legendaProduto').textContent = 'Editar Produto';
+        document.getElementById('botaoSalvarProduto').textContent = 'Salvar Alterações';
+        document.getElementById('botaoCancelarEdicao').hidden = false;
+        document.getElementById('formProduto').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function editarProduto(produtoId) {
+        const resposta = await fetch('/api/produtos');
+        const produtos = await resposta.json();
+        const produto = produtos.find(item => item.id === produtoId);
+        if (produto) preencherFormulario(produto);
+    }
+
+    function cancelarEdicao() {
+        produtoEmEdicao = null;
+        document.getElementById('formProduto').reset();
+        document.getElementById('quantidade_minima').value = 5;
+        document.getElementById('legendaProduto').textContent = 'Cadastrar Novo Produto';
+        document.getElementById('botaoSalvarProduto').textContent = 'Cadastrar Produto';
+        document.getElementById('botaoCancelarEdicao').hidden = true;
+    }
+
+    document.getElementById('botaoCancelarEdicao').addEventListener('click', cancelarEdicao);
+
+    function exibirMensagem(elemento, resultado) {
+        elemento.textContent = resultado.mensagem;
+        elemento.style.color = resultado.sucesso ? '#2E7D32' : '#D32F2F';
+    }
+
+    // POST: Cadastra novo produto ou PUT: atualiza produto existente
+    document.getElementById('formProduto').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const payload = {
+            nome: document.getElementById('nome_produto').value,
+            categoria: document.getElementById('categoria').value,
+            fornecedor: document.getElementById('fornecedor').value,
+            quantidade_atual: document.getElementById('quantidade_atual').value,
+            quantidade_minima: document.getElementById('quantidade_minima').value,
+            data_validade: document.getElementById('data_validade').value,
+            valor_compra: document.getElementById('valor_compra').value,
+            unidade_medida: document.getElementById('unidade_medida').value
+        };
+
+        try {
+            const resposta = await fetch(produtoEmEdicao ? `/api/produtos/${produtoEmEdicao}` : '/api/produtos', {
+                method: produtoEmEdicao ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const resultado = await resposta.json();
+            
+            if(resultado.sucesso) {
+                cancelarEdicao();
+                carregarProdutos(); // Atualiza a tela na hora
+            } else {
+                alert('Erro: ' + resultado.mensagem);
+            }
+        } catch (error) {
+            alert('Erro de comunicação com a API.');
+        }
+    });
+
+    document.getElementById('formEntrada').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const mensagem = document.getElementById('mensagemEntrada');
+        const resposta = await fetch('/api/entradas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                produto_id: document.getElementById('produto_entrada_id').value,
+                quantidade: document.getElementById('qtd_entrada').value,
+                validade_lote: document.getElementById('validade_entrada').value,
+                valor_compra: document.getElementById('valor_entrada').value
+            })
+        });
+        const resultado = await resposta.json();
+        exibirMensagem(mensagem, resultado);
+        if (resultado.sucesso) {
+            this.reset();
+            carregarProdutos();
+        }
+    });
+
+    // POST: Registra Saída
+    document.getElementById('formSaida').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const payload = {
+            produto_id: document.getElementById('produto_saida_id').value,
+            quantidade: document.getElementById('qtd_saida').value,
+            motivo: document.getElementById('motivo_saida').value,
+            cliente_tutor: document.getElementById('cliente_tutor_saida').value
+        };
+
+        try {
+            const resposta = await fetch('/api/saidas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const resultado = await resposta.json();
+            
+            const msgBox = document.getElementById('mensagemAcessivel');
+            exibirMensagem(msgBox, resultado);
+
+            if(resultado.sucesso) {
+                document.getElementById('formSaida').reset();
+                carregarProdutos(); 
+                
+                // Limpa a mensagem após 4 segundos
+                setTimeout(() => { msgBox.textContent = ''; }, 4000);
+            }
+        } catch (error) {
+            alert('Erro de comunicação com a API.');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}UniVet | Consultas{% endblock %}
+
+{% block content %}
+    <section class="page-header">
+        <div>
+            <h1>Consultas</h1>
+            <p>Calendário mensal com contagem de atendimentos e acesso direto para a agenda diária em grade.</p>
+        </div>
+        <a class="btn" href="{{ url_for('criar_consulta') }}">Nova consulta</a>
+    </section>
+
+    <section class="card calendar-card">
+        <div class="card-body">
+            <div class="calendar-header">
+                <a class="btn btn-secondary" href="{{ url_for('listar_consultas', ano=ano_anterior, mes=mes_anterior) }}">Mês anterior</a>
+                <div>
+                    <h2>{{ nome_mes }} de {{ ano }}</h2>
+                    <p>Verde: com consultas | Cinza: sem expediente | Branco: sem atendimentos</p>
+                </div>
+                <a class="btn btn-secondary" href="{{ url_for('listar_consultas', ano=ano_proximo, mes=mes_proximo) }}">Próximo mês</a>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="calendar-weekday">Seg</div><div class="calendar-weekday">Ter</div><div class="calendar-weekday">Qua</div><div class="calendar-weekday">Qui</div><div class="calendar-weekday">Sex</div><div class="calendar-weekday">Sab</div><div class="calendar-weekday">Dom</div>
+                {% for semana in calendario %}
+                    {% for dia in semana %}
+                        {% if dia.esta_no_mes %}
+                            <a href="{{ url_for('agenda_do_dia', data_iso=dia.data_iso) }}" class="calendar-day {% if dia.sem_expediente %}off-day{% elif dia.tem_consultas %}busy-day{% else %}free-day{% endif %}">
+                                <span class="calendar-number">{{ dia.numero }}</span>
+                                <span class="calendar-count">{{ dia.total_consultas }}</span>
+                            </a>
+                        {% else %}
+                            <div class="calendar-day muted-day"><span class="calendar-number">{{ dia.numero }}</span></div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-body">
+            <h2>Destaques do mês</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr><th>Data e hora</th><th>Paciente</th><th>Serviço</th><th>Veterinário</th><th>Tipo</th><th>Status</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody>
+                        {% if consultas_mes %}
+                            {% for consulta in consultas_mes %}
+                                <tr>
+                                    <td>{{ consulta["data_hora"]|data_hora_br }}</td>
+                                    <td>{{ consulta["pet_nome"] }}</td>
+                                    <td>{{ consulta["servico_nome"] }}</td>
+                                    <td>{{ consulta["veterinario_nome"] }}</td>
+                                    <td>{{ consulta["tipo_atendimento"] }}</td>
+                                    <td><span class="status status-{{ consulta['status']|status_slug }}">{{ consulta["status"] }}</span></td>
+                                    <td>
+                                        <div class="inline-actions">
+                                            <a class="btn btn-secondary" href="{{ url_for('editar_consulta', consulta_id=consulta['id']) }}">Editar</a>
+                                            <a class="btn btn-secondary" href="{{ url_for('visualizar_historico', entidade='consultas', registro_id=consulta['id']) }}">Histórico clínico</a>
+                                            <form method="post" action="{{ url_for('excluir_consulta', consulta_id=consulta['id']) }}">
+                                                <button class="btn btn-danger" type="submit" onclick="return confirm('Deseja excluir esta consulta?')">Excluir</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="7" class="empty-state">Nenhuma consulta cadastrada para este mês.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+{% endblock %}

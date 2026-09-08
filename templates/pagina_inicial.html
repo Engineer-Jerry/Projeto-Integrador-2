@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}UniVet | Página Inicial{% endblock %}
+
+{% block content %}
+    <section class="page-header">
+        <div>
+            <h1>Página inicial</h1>
+            <p>Visão geral da clínica com agenda do dia, indicadores e próximos atendimentos.</p>
+        </div>
+        <a class="btn" href="{{ url_for('criar_consulta') }}">Agendar consulta</a>
+    </section>
+
+    <section class="grid-cards">
+        <article class="card"><div class="card-body"><span class="metric-label">Tutores cadastrados</span><strong class="metric-value">{{ totais.tutores }}</strong></div></article>
+        <article class="card"><div class="card-body"><span class="metric-label">Animais cadastrados</span><strong class="metric-value">{{ totais.pets }}</strong></div></article>
+        <article class="card"><div class="card-body"><span class="metric-label">Consultas no sistema</span><strong class="metric-value">{{ totais.consultas }}</strong></div></article>
+        <article class="card"><div class="card-body"><span class="metric-label">Consultas de hoje</span><strong class="metric-value">{{ consultas_hoje|length }}</strong></div></article>
+    </section>
+
+    <section class="grid-cards">
+        <article class="card soft-card"><div class="card-body"><span class="metric-label">Agendadas hoje</span><strong class="metric-value">{{ resumo_hoje["Agendada"] }}</strong></div></article>
+        <article class="card soft-card"><div class="card-body"><span class="metric-label">Concluidas hoje</span><strong class="metric-value">{{ resumo_hoje["Concluida"] }}</strong></div></article>
+        <article class="card soft-card"><div class="card-body"><span class="metric-label">Canceladas hoje</span><strong class="metric-value">{{ resumo_hoje["Cancelada"] }}</strong></div></article>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-body">
+            <h2>Agenda de hoje</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Horário</th>
+                            <th>Paciente</th>
+                            <th>Tutor</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Confirmação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if consultas_hoje %}
+                            {% for consulta in consultas_hoje %}
+                                <tr>
+                                    <td>{{ consulta["data_hora"]|hora_br }}</td>
+                                    <td>{{ consulta["pet_nome"] }}</td>
+                                    <td>{{ consulta["tutor_nome"] }}</td>
+                                    <td>{{ consulta["tipo_consulta"] or "Consulta clínica" }}</td>
+                                    <td><span class="status status-{{ consulta['status']|status_slug }}">{{ consulta["status"] }}</span></td>
+                                    <td><span class="status status-{{ consulta['confirmacao_status']|status_slug }}">{{ consulta["confirmacao_status"] }}</span></td>
+                                    <td>
+                                        <div class="inline-actions">
+                                            <a class="btn btn-secondary" href="{{ url_for('editar_consulta', consulta_id=consulta['id']) }}">Editar</a>
+                                            <a class="btn btn-secondary" href="{{ url_for('visualizar_historico', entidade='consultas', registro_id=consulta['id']) }}">Histórico clínico</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="7" class="empty-state">Não existem consultas marcadas para hoje.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-body">
+            <h2>Próximos atendimentos</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data e hora</th>
+                            <th>Paciente</th>
+                            <th>Tutor</th>
+                            <th>Tipo</th>
+                            <th>Confirmação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if proximas_consultas %}
+                            {% for consulta in proximas_consultas %}
+                                <tr>
+                                    <td>{{ consulta["data_hora"]|data_hora_br }}</td>
+                                    <td>{{ consulta["pet_nome"] }}</td>
+                                    <td>{{ consulta["tutor_nome"] }}</td>
+                                    <td>{{ consulta["tipo_consulta"] or "Consulta clínica" }}</td>
+                                    <td><span class="status status-{{ consulta['confirmacao_status']|status_slug }}">{{ consulta["confirmacao_status"] }}</span></td>
+                                    <td>
+                                        <div class="inline-actions">
+                                            <a class="btn btn-secondary" href="{{ url_for('editar_consulta', consulta_id=consulta['id']) }}">Editar</a>
+                                            <a class="btn btn-secondary" href="{{ url_for('visualizar_historico', entidade='consultas', registro_id=consulta['id']) }}">Histórico clínico</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="6" class="empty-state">Ainda não existem atendimentos futuros cadastrados.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+{% endblock %}

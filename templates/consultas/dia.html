@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}UniVet | Agenda do Dia{% endblock %}
+
+{% block content %}
+    <section class="page-header">
+        <div>
+            <h1>Agenda diária</h1>
+            <p>Data selecionada: {{ data_iso|data_br }}. Clique em um horário para ver os detalhes daquele slot.</p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('listar_consultas') }}">Voltar ao calendario</a>
+    </section>
+
+    <section class="card">
+        <div class="card-body">
+            <div class="agenda-grid" id="agenda-grid">
+                {% for slot in grade %}
+                    <a id="slot-{{ slot.horario|replace(':', '-') }}" href="{{ url_for('agenda_do_dia', data_iso=data_iso, hora=slot.horario) }}#detalhes-horario" class="agenda-slot {% if slot.ocupadas %}ocupado{% else %}livre{% endif %} {% if slot.ativo %}ativo{% endif %}">
+                        <strong>{{ slot.horario }}</strong>
+                        <span>{% if slot.ocupadas %}{{ slot.ocupadas|length }} atendimento(s){% else %}Disponível{% endif %}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="card table-card" id="detalhes-horario">
+        <div class="card-body">
+            <h2>{% if hora_selecionada %}Detalhes do horário {{ hora_selecionada }}{% else %}Agenda completa do dia{% endif %}</h2>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr><th>Início</th><th>Fim</th><th>Paciente</th><th>Serviço</th><th>Veterinário</th><th>Tipo</th><th>Status</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody>
+                        {% set lista = detalhes_horario if hora_selecionada else consultas %}
+                        {% if lista %}
+                            {% for consulta in lista %}
+                                <tr>
+                                    <td>{{ consulta["data_hora"]|hora_br }}</td>
+                                    <td>{{ consulta["data_fim"]|hora_br }}</td>
+                                    <td>{{ consulta["pet_nome"] }}</td>
+                                    <td>{{ consulta["servico_nome"] }}</td>
+                                    <td>{{ consulta["veterinario_nome"] }}</td>
+                                    <td>{{ consulta["tipo_atendimento"] }}</td>
+                                    <td><span class="status status-{{ consulta['status']|status_slug }}">{{ consulta["status"] }}</span></td>
+                                    <td>
+                                        <div class="inline-actions">
+                                            <a class="btn btn-secondary" href="{{ url_for('editar_consulta', consulta_id=consulta['id']) }}">Editar</a>
+                                            <a class="btn btn-secondary" href="{{ url_for('visualizar_historico', entidade='consultas', registro_id=consulta['id']) }}">Histórico clínico</a>
+                                            <form method="post" action="{{ url_for('excluir_consulta', consulta_id=consulta['id']) }}">
+                                                <button class="btn btn-danger" type="submit" onclick="return confirm('Deseja excluir esta consulta?')">Excluir</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="8" class="empty-state">Nenhum atendimento encontrado para este horário.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const hoje = new Date();
+        const dataSelecionada = "{{ data_iso }}";
+        if (dataSelecionada === hoje.toISOString().slice(0, 10)) {
+            const horarioAtual = `${String(hoje.getHours()).padStart(2, "0")}-${String(Math.floor(hoje.getMinutes() / 20) * 20).padStart(2, "0")}`;
+            const alvo = document.getElementById(`slot-${horarioAtual}`);
+            if (alvo) {
+                alvo.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+    </script>
+{% endblock %}

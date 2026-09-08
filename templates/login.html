@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVet | Boas-vindas</title>
+    <link rel="icon" type="image/jpeg" href="{{ logo_url }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="welcome-body">
+    <main class="welcome-shell">
+        <section class="welcome-card">
+            <div class="welcome-brand">
+                <img src="{{ logo_url }}" alt="Logo da Clinica Veterinaria Fernanda Calixto">
+                <div>
+                    <span class="pill">Acesso seguro da clínica</span>
+                    <h1>Bem-vinda ao UniVet</h1>
+                    <p>
+                        Entre com usuário e senha para acessar a rotina clínica com
+                        permissões separadas para administração e operação veterinária.
+                    </p>
+                </div>
+            </div>
+
+            {% with mensagens = get_flashed_messages(with_categories=true) %}
+                {% if mensagens %}
+                    <ul class="flash-list">
+                        {% for categoria, mensagem in mensagens %}
+                            <li class="flash-item {{ categoria }}">{{ mensagem }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+
+            <form method="post" class="welcome-form">
+                <div class="field-group">
+                    <label for="login">Usuário</label>
+                    <input type="text" id="login" name="login" placeholder="admin ou fernanda.calixto" required>
+                </div>
+                <div class="field-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+                </div>
+                <button class="btn" type="submit">Entrar na página inicial</button>
+            </form>
+
+            <div class="highlight-box">
+                Acesso de testes: <strong>admin / 123456</strong><br>
+                Acesso da clínica: <strong>fernanda.calixto / Fer123</strong>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
